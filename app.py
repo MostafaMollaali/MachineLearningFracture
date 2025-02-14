@@ -22,6 +22,25 @@ import lightgbm as lgb
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
 
+# ======================
+# CUSTOM STYLING (MOVED AFTER PAGE CONFIG)
+# ======================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap');
+    /* Keep the rest of your custom styles here */
+</style>
+""", unsafe_allow_html=True)
+
+# ======================
+# REST OF YOUR CODE (CONSTANTS, FUNCTIONS, MAIN LOGIC)
+# ======================
+# [Keep all your existing code here, including model_files, normalization_files,
+# helper functions, and main() implementation]
+
+if __name__ == "__main__":
+    main()
+
 
 # ======================
 # PAGE CONFIG
@@ -96,7 +115,7 @@ st.markdown("""
 # ======================
 # CONSTANTS & CONFIG
 # ======================
-categories = ["ANN (Single Neuron)", "ANN (Multiple Neurons)", "XGBoost", "LightGBM"]
+categories = ["ANN-Practical Solution", "ANN-MPL", "XGBoost", "LightGBM"]
 sheet_names = ["Glass-Tension", "Glass-Flexure", "Ceramic-Flexure", "Ceramic-Tension"]
 
 ceramic_input_columns = ['sqrt(t/R)', 'E*sqrt(t)/Kic', 'ell/R', 'v']
