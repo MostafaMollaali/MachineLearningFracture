@@ -33,16 +33,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ======================
-# REST OF YOUR CODE (CONSTANTS, FUNCTIONS, MAIN LOGIC)
-# ======================
-# [Keep all your existing code here, including model_files, normalization_files,
-# helper functions, and main() implementation]
-
-if __name__ == "__main__":
-    main()
-
-
-# ======================
 # PAGE CONFIG
 # ======================
 st.set_page_config(
