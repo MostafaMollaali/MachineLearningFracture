@@ -10,17 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ======================
-# REST OF IMPORTS
-# ======================
-import numpy as np
-import os
-import json
-import pandas as pd
-import xgboost as xgb
-import lightgbm as lgb
-from tensorflow.keras.models import load_model
-from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
+
 
 # ======================
 # CUSTOM STYLING (MOVED AFTER PAGE CONFIG)
@@ -32,15 +22,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ======================
-# PAGE CONFIG
-# ======================
-st.set_page_config(
-    page_title="Material Strength AI",
-    page_icon="🔬",
-    layout="centered",
-    initial_sidebar_state="expanded"
-)
 
 # ======================
 # CUSTOM STYLING
@@ -101,6 +82,19 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+
+# ======================
+# REST OF IMPORTS
+# ======================
+import numpy as np
+import os
+import json
+import pandas as pd
+import xgboost as xgb
+import lightgbm as lgb
+from tensorflow.keras.models import load_model
+from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
 
 # ======================
 # CONSTANTS & CONFIG
