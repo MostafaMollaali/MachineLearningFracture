@@ -22,6 +22,17 @@ import lightgbm as lgb
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
 
+
+# ======================
+# PAGE CONFIG
+# ======================
+st.set_page_config(
+    page_title="Material Strength AI",
+    page_icon="🔬",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
+
 # ======================
 # CUSTOM STYLING
 # ======================
@@ -98,13 +109,13 @@ target_column = 'Sig*sqrt(t)/Kic'
 target_latex = r'$\dfrac{\sigma\sqrt{t}}{K_{\mathrm{Ic}}}$'
 
 model_files = {
-    "ANN (Single Neuron)": {
+    "ANN-Practical Solution": {
         "Glass-Tension": "_out/best_model_GLASS-TENSION_tanh_SGD_log_cosh.h5",
         "Glass-Flexure": "_out/best_model_GLASS-FLEXURE_tanh_AdamW_log_cosh.h5",
         "Ceramic-Flexure": "_out/best_model_CERAMIC-FLEXURE_tanh_RMSprop_log_cosh.h5",
         "Ceramic-Tension": "_out/best_model_CERAMIC-TENSION_tanh_RMSprop_mse.h5"
     },
-    "ANN (Multiple Neurons)": {
+    "ANN-MPL": {
         "Glass-Tension": "_out/best_model_ANN481Glass-Tension_softsign_AdamW_log_cosh_HU6.h5",
         "Glass-Flexure": "_out/best_model_ANN481Glass-Flexure_softsign_RMSprop_mae_HU4.h5",
         "Ceramic-Flexure": "_out/best_model_ANN481Ceramic-Flexure_tanh_RMSprop_log_cosh_HU6.h5",
@@ -160,9 +171,7 @@ def load_best_model(category, sheet):
         st.error(f"❌ Model file not found at: `{model_path}`")
         st.stop()
 
-    st.write(f"✅ Loading Model for **{sheet}** ({category}) from `{model_path}`")
-
-    if category in ["ANN (Single Neuron)", "ANN (Multiple Neurons)"]:
+    if category in ["ANN-Practical Solution", "ANN-MPL"]:
         return load_model(model_path, custom_objects=custom_objects)
     elif category == "XGBoost":
         model = xgb.Booster()
@@ -172,13 +181,80 @@ def load_best_model(category, sheet):
         return lgb.Booster(model_file=model_path)
 
 # ======================
+# EXPLANATION SECTION
+# ======================
+def show_parameter_explanations(selected_sheet, norm_params):
+    st.markdown("---")
+    st.header("📚 Parameter Explanations")
+    
+    # Display test configuration diagram
+    st.image("assets/fs_ceramic.jpg",
+             caption="Fig. 1. Material Test Configuration Diagram",
+             use_column_width=True)
+    
+    st.markdown("""
+    ### Input Parameters Explanation:
+    These dimensionless parameters capture the complex relationships between material properties and geometry:
+    """)
+    
+    # Determine input parameters based on material type
+    if "Glass" in selected_sheet:
+        params = zip(glass_input_latex, [
+            "Square root of thickness-to-flaw radius ratio - governs stress concentration",
+            "Elastic modulus scaled by fracture toughness - represents material's brittleness",
+            "Poisson's ratio - measures lateral strain response"
+        ], glass_input_columns)
+    else:
+        params = zip(ceramic_input_latex, [
+            "Square root of thickness-to-flaw radius ratio",
+            "Elastic modulus scaled by fracture toughness",
+            "Flaw aspect ratio (length/radius) - accounts for flaw geometry",
+            "Poisson's ratio"
+        ], ceramic_input_columns)
+
+    # Display parameter details
+    for i, (latex, desc, col) in enumerate(params):
+        with st.expander(f"Parameter {i+1}: {latex}", expanded=False):
+            st.markdown(f"""
+            **Physical Meaning:**  
+            {desc}
+            
+            **Mathematical Expression:**  
+            {latex}
+            
+            **Typical Range:**  
+            {norm_params['X_min'][col]:.4f} - {norm_params['X_max'][col]:.4f}
+            """)
+
+    # Output parameter explanation
+    st.markdown("""
+    ### Output Parameter Explanation:
+    """)
+    with st.expander(f"Predicted Strength: {target_latex}", expanded=True):
+        st.markdown(f"""
+        **Physical Meaning:**  
+        Dimensionless strength at failure - critical stress intensity factor scaled by geometry
+        
+        **Mathematical Expression:**  
+        {target_latex}  
+        
+        Where:  
+        - σ = Failure stress (MPa)  
+        - t = Material thickness (mm)  
+        - K<sub>Ic</sub> = Fracture toughness (MPa·√m)  
+        
+        **Interpretation:**  
+        Higher values indicate greater resistance to fracture propagation. 
+        """, unsafe_allow_html=True)
+
+# ======================
 # MAIN APP
 # ======================
 def main():
     st.title("🧪 Material Strength AI Predictor")
     st.markdown("*Leveraging advanced machine learning models to predict material failure thresholds*")
 
-    # Initialize session state for prediction history
+    # Initialize prediction history
     if 'history' not in st.session_state:
         st.session_state.history = []
 
@@ -188,17 +264,16 @@ def main():
         selected_category = st.selectbox("**Select AI Model Type**", categories)
         selected_sheet = st.selectbox("**Material & Test Type**", sheet_names)
 
-    # Load model and params
+    # Load model and normalization parameters
     model = load_best_model(selected_category, selected_sheet)
     norm_params = load_normalization_params(selected_sheet)
 
+    # Show parameter explanations
+    show_parameter_explanations(selected_sheet, norm_params)
+
     # Input configuration
-    if "Glass" in selected_sheet:
-        input_columns = glass_input_columns
-        input_labels = glass_input_latex
-    else:
-        input_columns = ceramic_input_columns
-        input_labels = ceramic_input_latex
+    input_columns = glass_input_columns if "Glass" in selected_sheet else ceramic_input_columns
+    input_labels = glass_input_latex if "Glass" in selected_sheet else ceramic_input_latex
 
     # Sidebar inputs
     with st.sidebar:
@@ -207,20 +282,26 @@ def main():
         out_of_range = False
 
         for i, label in enumerate(input_labels):
-            min_val = norm_params["X_min"][input_columns[i]]
-            max_val = norm_params["X_max"][input_columns[i]]
+            col = input_columns[i]
+            min_val = norm_params["X_min"][col]
+            max_val = norm_params["X_max"][col]
 
             with st.expander(f"Parameter {i+1}: {label}", expanded=True):
-                value = st.slider(
+                value = st.number_input(
                     f"Value for {label}",
-                    min_value=float(min_val),
-                    max_value=float(max_val),
                     value=float((min_val + max_val)/2),
                     step=0.0001,
-                    format="%.4f"
+                    format="%.4f",
+                    key=f"input_{i}"
                 )
+                
+                # Range validation
                 if value < min_val or value > max_val:
+                    st.error(f"⚠️ Out of recommended range ({min_val:.4f} to {max_val:.4f})")
                     out_of_range = True
+                else:
+                    st.caption(f"Recommended range: {min_val:.4f} to {max_val:.4f}")
+                
                 user_inputs.append(value)
 
     # Prediction logic
@@ -229,25 +310,25 @@ def main():
             st.error("⚠️ One or more parameters are outside recommended ranges!")
         else:
             with st.spinner("🧠 Analyzing material properties..."):
-                normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
-
                 try:
-                    # Model-specific prediction handling
+                    # Normalize and predict
+                    normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
+                    
                     if selected_category == "XGBoost":
                         input_df = pd.DataFrame(normalized_input, columns=model.feature_names)
                         dmatrix = xgb.DMatrix(input_df)
                         prediction = model.predict(dmatrix)
                     elif selected_category == "LightGBM":
                         prediction = model.predict(normalized_input)
-                    else:  # ANN Models
+                    else:  # ANN models
                         prediction = model.predict(normalized_input)
 
-                    # Post-processing
+                    # Denormalize and store result
                     real_prediction = denormalize_output(prediction[0], norm_params)
                     if isinstance(real_prediction, np.ndarray):
                         real_prediction = real_prediction.item()
 
-                    # Update prediction history
+                    # Update history
                     st.session_state.history.insert(0, {
                         "prediction": real_prediction,
                         "model": selected_category,
@@ -258,6 +339,7 @@ def main():
                     # Display results
                     st.success("✅ Prediction Generated!")
                     col_res1, col_res2 = st.columns([2, 3])
+                    
                     with col_res1:
                         st.markdown(f"""
                         <div class="prediction-card success-animation">
