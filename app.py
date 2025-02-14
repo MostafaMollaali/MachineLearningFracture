@@ -125,10 +125,10 @@ model_files = {
         "Ceramic-Tension": "_out/best_model_ANN481Ceramic-Tension_swish_AdamW_huber_HU9.h5"
     },
     "XGBoost": {
-        "Glass-Tension": "_out/best_xgboost_model_GLASS-TENSION.json",
-        "Glass-Flexure": "_out/best_xgboost_model_GLASS-FLEXURE.json",
-        "Ceramic-Flexure": "_out/best_xgboost_model_CERAMIC-FLEXURE.json",
-        "Ceramic-Tension": "_out/best_xgboost_model_CERAMIC-TENSION.json"
+        "Glass-Tension": "_out/best_xgboost_model_Glass-Tension.json",
+        "Glass-Flexure": "_out/best_xgboost_model_Glass-Flexure.json",
+        "Ceramic-Flexure": "_out/best_xgboost_model_Ceramic-Flexure.json",
+        "Ceramic-Tension": "_out/best_xgboost_model_Ceramic-Tension.json"
     },
     "LightGBM": {
         "Glass-Tension": "_out/best_lightgbm_model_Glass-Tension.json",
@@ -193,8 +193,8 @@ def show_parameter_explanations(selected_sheet, norm_params):
     # Display test configuration diagram
     st.image("assets/fs_ceramic.jpg",
              caption="Fig. 1. Material Test Configuration Diagram",
-             use_column_width=True)
-    
+             width=350)
+        
     st.markdown("""
     ### Input Parameters Explanation:
     These dimensionless parameters capture the complex relationships between material properties and geometry:
