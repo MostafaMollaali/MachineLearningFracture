@@ -99,7 +99,7 @@ from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, 
 # ======================
 # CONSTANTS & CONFIG
 # ======================
-categories = ["ANN-Practical Solution", "ANN-MPL", "XGBoost", "LightGBM"]
+categories = ["ANN-Practical Solution", "ANN-MPL"]#, "XGBoost", "LightGBM"]
 sheet_names = ["Glass-Tension", "Glass-Flexure", "Ceramic-Flexure", "Ceramic-Tension"]
 
 ceramic_input_columns = ['sqrt(t/R)', 'E*sqrt(t)/Kic', 'ell/R', 'v']
@@ -119,23 +119,23 @@ model_files = {
         "Ceramic-Tension": "_out/best_model_CERAMIC-TENSION_tanh_RMSprop_mse.h5"
     },
     "ANN-MPL": {
-        "Glass-Tension": "_out/best_model_ANN481Glass-Tension_softsign_AdamW_log_cosh_HU6.h5",
-        "Glass-Flexure": "_out/best_model_ANN481Glass-Flexure_softsign_RMSprop_mae_HU4.h5",
-        "Ceramic-Flexure": "_out/best_model_ANN481Ceramic-Flexure_tanh_RMSprop_log_cosh_HU6.h5",
-        "Ceramic-Tension": "_out/best_model_ANN481Ceramic-Tension_swish_AdamW_huber_HU9.h5"
-    },
-    "XGBoost": {
-        "Glass-Tension": "_out/best_xgboost_model_Glass-Tension.json",
-        "Glass-Flexure": "_out/best_xgboost_model_Glass-Flexure.json",
-        "Ceramic-Flexure": "_out/best_xgboost_model_Ceramic-Flexure.json",
-        "Ceramic-Tension": "_out/best_xgboost_model_Ceramic-Tension.json"
-    },
-    "LightGBM": {
-        "Glass-Tension": "_out/best_lightgbm_model_Glass-Tension.json",
-        "Glass-Flexure": "_out/best_lightgbm_model_Glass-Flexure.json",
-        "Ceramic-Flexure": "_out/best_lightgbm_model_Ceramic-Flexure.json",
-        "Ceramic-Tension": "_out/best_lightgbm_model_Ceramic-Tension.json"
-    }
+        "Glass-Tension": "_out/best_model_ANN481Glass-Tension_tanh_SGD_log_cosh_HU8.h5",
+        "Glass-Flexure": "_out/best_model_ANN481Glass-Flexure_tanh_AdamW_log_cosh_HU16.h5",
+        "Ceramic-Flexure": "_out/best_model_ANN481Ceramic-Flexure_tanh_RMSprop_log_cosh_HU8.h5",
+        "Ceramic-Tension": "_out/best_model_ANN481Ceramic-Tension_tanh_RMSprop_mse_HU16.h5"
+    }#,
+#    "XGBoost": {
+#        "Glass-Tension": "_out/best_xgboost_model_Glass-Tension.json",
+#        "Glass-Flexure": "_out/best_xgboost_model_Glass-Flexure.json",
+#        "Ceramic-Flexure": "_out/best_xgboost_model_Ceramic-Flexure.json",
+#        "Ceramic-Tension": "_out/best_xgboost_model_Ceramic-Tension.json"
+#    },
+#    "LightGBM": {
+#        "Glass-Tension": "_out/best_lightgbm_model_Glass-Tension.json",
+#        "Glass-Flexure": "_out/best_lightgbm_model_Glass-Flexure.json",
+#        "Ceramic-Flexure": "_out/best_lightgbm_model_Ceramic-Flexure.json",
+#        "Ceramic-Tension": "_out/best_lightgbm_model_Ceramic-Tension.json"
+#    }
 }
 
 normalization_files = {
@@ -162,11 +162,15 @@ def load_normalization_params(sheet):
 def normalize_input(user_input, norm_params, input_columns):
     X_min = np.array([norm_params["X_min"][col] for col in input_columns])
     X_max = np.array([norm_params["X_max"][col] for col in input_columns])
-    return (np.array(user_input) - X_min) / (X_max - X_min)
+    # Scale to [0, 1] then to [-1, 1]
+    return 2 * (np.array(user_input) - X_min) / (X_max - X_min) - 1
+
 
 def denormalize_output(normalized_pred, norm_params):
     y_min, y_max = norm_params["y_min"], norm_params["y_max"]
-    return y_min + normalized_pred * (y_max - y_min)
+    # Reverse the [-1, 1] normalization back to original scale
+    return y_min + ((normalized_pred + 1) / 2) * (y_max - y_min)
+
 
 def load_best_model(category, sheet):
     model_path = model_files[category][sheet]
@@ -176,12 +180,12 @@ def load_best_model(category, sheet):
 
     if category in ["ANN-Practical Solution", "ANN-MPL"]:
         return load_model(model_path, custom_objects=custom_objects)
-    elif category == "XGBoost":
-        model = xgb.Booster()
-        model.load_model(model_path)
-        return model
-    elif category == "LightGBM":
-        return lgb.Booster(model_file=model_path)
+#    elif category == "XGBoost":
+#        model = xgb.Booster()
+#        model.load_model(model_path)
+#        return model
+#    elif category == "LightGBM":
+#        return lgb.Booster(model_file=model_path)
 
 # ======================
 # EXPLANATION SECTION
@@ -293,7 +297,7 @@ def main():
                 value = st.number_input(
                     f"Value for {label}",
                     value=float((min_val + max_val)/2),
-                    step=0.0001,
+                    step=0.001,
                     format="%.4f",
                     key=f"input_{i}"
                 )
@@ -317,14 +321,15 @@ def main():
                     # Normalize and predict
                     normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
                     
-                    if selected_category == "XGBoost":
-                        input_df = pd.DataFrame(normalized_input, columns=model.feature_names)
-                        dmatrix = xgb.DMatrix(input_df)
-                        prediction = model.predict(dmatrix)
-                    elif selected_category == "LightGBM":
-                        prediction = model.predict(normalized_input)
-                    else:  # ANN models
-                        prediction = model.predict(normalized_input)
+#                    if selected_category == "XGBoost":
+#                        input_df = pd.DataFrame(normalized_input, columns=model.feature_names)
+#                        dmatrix = xgb.DMatrix(input_df)
+#                        prediction = model.predict(dmatrix)
+#                    elif selected_category == "LightGBM":
+#                        prediction = model.predict(normalized_input)
+#                    else:  # ANN models
+#                        prediction = model.predict(normalized_input)
+                    prediction = model.predict(normalized_input)
 
                     # Denormalize and store result
                     real_prediction = denormalize_output(prediction[0], norm_params)
