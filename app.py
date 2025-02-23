@@ -113,16 +113,16 @@ target_latex = r'$\dfrac{\sigma\sqrt{t}}{K_{\mathrm{Ic}}}$'
 
 model_files = {
     "ANN-Practical Solution": {
-        "Glass-Tension": "_out/best_model_GLASS-TENSION_tanh_SGD_log_cosh.h5",
-        "Glass-Flexure": "_out/best_model_GLASS-FLEXURE_tanh_AdamW_log_cosh.h5",
-        "Ceramic-Flexure": "_out/best_model_CERAMIC-FLEXURE_tanh_RMSprop_log_cosh.h5",
-        "Ceramic-Tension": "_out/best_model_CERAMIC-TENSION_tanh_RMSprop_mse.h5"
+        "Glass-Tension": "_out/best_model_ANN_PracticalSol_GLASS-TENSION.h5",
+        "Glass-Flexure": "_out/best_model_ANN_PracticalSol_GLASS-FLEXURE.h5",
+        "Ceramic-Flexure": "_out/best_model_ANN_PracticalSol_Ceramic-Flexure.h5",
+        "Ceramic-Tension": "_out/best_model_ANN_PracticalSol_CERAMIC-TENSION.h5"
     },
     "ANN-MPL": {
-        "Glass-Tension": "_out/best_model_ANN481Glass-Tension_tanh_SGD_log_cosh_HU8.h5",
-        "Glass-Flexure": "_out/best_model_ANN481Glass-Flexure_tanh_AdamW_log_cosh_HU16.h5",
-        "Ceramic-Flexure": "_out/best_model_ANN481Ceramic-Flexure_tanh_RMSprop_log_cosh_HU8.h5",
-        "Ceramic-Tension": "_out/best_model_ANN481Ceramic-Tension_tanh_RMSprop_mse_HU16.h5"
+        "Glass-Tension": "_out/best_model_ANN_MPL_Glass-Tension_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
+        "Glass-Flexure": "_out/best_model_ANN_MPL_Glass-Flexure_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
+        "Ceramic-Flexure": "_out/best_model_ANN_MPL_Ceramic-Flexure_OPT-RMSprop_LR-0.012344_LOSS-mse_HU-7_ACT-softsign.keras",
+        "Ceramic-Tension": "_out/best_model_ANN_MPL_Ceramic-Tension_OPT-Adam_LR-0.032276_LOSS-log_cosh_HU-11_ACT-softsign.keras"
     }#,
 #    "XGBoost": {
 #        "Glass-Tension": "_out/best_xgboost_model_Glass-Tension.json",
