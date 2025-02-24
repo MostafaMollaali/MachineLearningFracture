@@ -113,10 +113,10 @@ target_latex = r'$\dfrac{\sigma\sqrt{t}}{K_{\mathrm{Ic}}}$'
 
 model_files = {
     "ANN-Practical Solution": {
-        "Glass-Tension": "_out/best_model_ANN_PracticalSol_GLASS-TENSION.h5",
-        "Glass-Flexure": "_out/best_model_ANN_PracticalSol_GLASS-FLEXURE.h5",
+        "Glass-Tension": "_out/best_model_ANN_PracticalSol_Glass-Tension.h5",
+        "Glass-Flexure": "_out/best_model_ANN_PracticalSol_Glass-Flexure.h5",
         "Ceramic-Flexure": "_out/best_model_ANN_PracticalSol_Ceramic-Flexure.h5",
-        "Ceramic-Tension": "_out/best_model_ANN_PracticalSol_CERAMIC-TENSION.h5"
+        "Ceramic-Tension": "_out/best_model_ANN_PracticalSol_Ceramic-Tension.h5"
     },
     "ANN-MPL": {
         "Glass-Tension": "_out/best_model_ANN_MPL_Glass-Tension_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
