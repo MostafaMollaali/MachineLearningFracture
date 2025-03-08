@@ -190,7 +190,18 @@ def load_best_model(category, sheet):
             model.load_model(model_path)
             return model
     elif category == "LightGBM":
-            return joblib.load(model_path)["model"]
+        model_data = joblib.load(model_path)  # ✅ Load dictionary
+        if isinstance(model_data, dict) and "model" in model_data:  # ✅ Extract model
+            model = model_data["model"]
+        else:
+            raise ValueError(f"❌ Unexpected LightGBM model format! Got: {type(model_data)}")
+        
+        if isinstance(model, lgb.LGBMRegressor):  # ✅ Ensure it's LGBMRegressor
+            return model
+        else:
+            raise ValueError(f"❌ LightGBM model is not a valid `LGBMRegressor`! Got: {type(model)}")
+
+
 
 # ======================
 # EXPLANATION SECTION
@@ -323,25 +334,41 @@ def main():
         else:
             with st.spinner("🧠 Analyzing material properties..."):
                 try:
-                    # Normalize and predict
+                    # ✅ Normalize Input
                     normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
-                    
+
+                    # ✅ Initialize `prediction` to avoid UnboundLocalError
+                    prediction = None
+
+                    # ✅ XGBoost Processing
                     if selected_category == "XGBoost":
                         input_df = pd.DataFrame(normalized_input, columns=input_columns)
-                        dmatrix = xgb.DMatrix(input_df, feature_names=model.feature_names)
+                        dmatrix = xgb.DMatrix(input_df, feature_names=input_columns)  # ✅ Ensure correct feature names
                         prediction = model.predict(dmatrix)
-                    elif selected_category == "LightGBM":
-                        prediction = model.predict(normalized_input)
-                    else:  # ANN models
-#                        prediction = model.predict(normalized_input)
-                        prediction = model.predict(normalized_input)
 
-                    # Denormalize and store result
+                    # ✅ LightGBM Processing
+                    elif selected_category == "LightGBM":
+                        if isinstance(model, lgb.LGBMRegressor):
+                            normalized_input = pd.DataFrame(normalized_input, columns=input_columns)  # ✅ Ensure DataFrame input
+                            prediction = model.predict(normalized_input)  # ✅ Works for LGBMRegressor
+                        else:
+                            raise ValueError(f"❌ LightGBM model is not a valid `LGBMRegressor`! Got: {type(model)}")
+
+
+                    # ✅ ANN Processing
+                    elif selected_category in ["ANN-Practical Solution", "ANN-MPL"]:
+                        prediction = model.predict(normalized_input)  # ✅ Keras expects NumPy array
+
+                    # 🚨 Ensure prediction was assigned before proceeding
+                    if prediction is None:
+                        raise ValueError(f"❌ Unsupported model type: {selected_category}")
+
+                    # ✅ Denormalize & Convert Result
                     real_prediction = denormalize_output(prediction[0], norm_params)
                     if isinstance(real_prediction, np.ndarray):
                         real_prediction = real_prediction.item()
 
-                    # Update history
+                    # ✅ Store in History
                     st.session_state.history.insert(0, {
                         "prediction": real_prediction,
                         "model": selected_category,
@@ -349,10 +376,10 @@ def main():
                         "inputs": user_inputs
                     })
 
-                    # Display results
+                    # ✅ Display Results
                     st.success("✅ Prediction Generated!")
                     col_res1, col_res2 = st.columns([2, 3])
-                    
+
                     with col_res1:
                         st.markdown(f"""
                         <div class="prediction-card success-animation">
@@ -379,6 +406,7 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Prediction failed: {str(e)}")
                     st.exception(e)
+
 
 if __name__ == "__main__":
     main()
