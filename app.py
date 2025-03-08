@@ -182,8 +182,9 @@ def denormalize_output(normalized_pred, norm_params):
 import lightgbm as lgb
 import joblib
 
-import lightgbm as lgb
-import joblib
+# ======================
+# CRITICAL LIGHTGBM FIXES
+# ======================
 
 def load_best_model(category, sheet):
     model_path = model_files[category][sheet]
@@ -194,23 +195,19 @@ def load_best_model(category, sheet):
     try:
         if category == "LightGBM":
             model_data = joblib.load(model_path)
-
-            # ✅ Debug: Check type of loaded model
-            st.write(f"🔥 Loaded LightGBM model type: {type(model_data)}")
             
-            # ✅ Fix model if it's stored as a dictionary
+            # Handle different storage formats
             if isinstance(model_data, dict) and "model" in model_data:
-                model = model_data["model"]
-            else:
-                model = model_data
-
-            # ✅ If it's still not an `LGBMRegressor`, reconstruct it
-            if not isinstance(model, lgb.LGBMRegressor):
-                st.write("⚠️ Fixing model type by reconstructing LGBMRegressor...")
-                model = lgb.LGBMRegressor()
-                model.__dict__.update(model_data.__dict__)  # Restore parameters
-
-            return model
+                booster = model_data["model"]
+                if isinstance(booster, lgb.Booster):
+                    # Reconstruct sklearn wrapper with proper parameters
+                    model = lgb.LGBMRegressor()
+                    model._Booster = booster
+                    model._n_features = booster.num_feature()
+                    model.fitted_ = True
+                    return model
+                return booster
+            return model_data
 
         elif category in ["ANN-Practical Solution", "ANN-MPL"]:
             return load_model(model_path, custom_objects=custom_objects)
@@ -371,17 +368,20 @@ def main():
                         prediction = model.predict(dmatrix)
 
                     # ✅ LightGBM Processing
-                    # ✅ LightGBM Processing
-                    # ✅ LightGBM Processing
                     elif selected_category == "LightGBM":
+                        # Universal input format
+                        input_array = np.array(normalized_input, dtype=np.float32).reshape(1, -1)
+                        
                         if isinstance(model, lgb.Booster):
-                            input_array = np.array([user_inputs], dtype=np.float32)
-                            prediction = model.predict(input_array, num_iteration=model.best_iteration)
-                        elif isinstance(model, lgb.LGBMRegressor):
-                            input_df = pd.DataFrame(normalized_input, columns=input_columns)
-                            prediction = model.predict(input_df)
+                            # Use native booster prediction
+                            prediction = model.predict(
+                                input_array,
+                                num_iteration=model.best_iteration,
+                                validate_features=False
+                            )
                         else:
-                            raise ValueError(f"❌ Unsupported LightGBM model type: {type(model)}")
+                            # Use sklearn-style prediction
+                            prediction = model.predict(input_array)
 
 
                     # ✅ ANN Processing
