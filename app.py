@@ -189,21 +189,26 @@ def load_best_model(category, sheet):
             model = xgb.Booster()
             model.load_model(model_path)
             return model
+    # ✅ LightGBM Processing
     elif category == "LightGBM":
-        model_data = joblib.load(model_path)  # ✅ Load dictionary
-        if isinstance(model_data, dict) and "model" in model_data:
-            model = model_data["model"]
-        else:
-            raise ValueError(f"❌ Unexpected LightGBM model format! Got: {type(model_data)}")
-        
-        # ✅ Convert model to LGBMRegressor explicitly
-        if isinstance(model, lgb.Booster):
-            model = lgb.LGBMRegressor()  # ✅ Create LGBMRegressor
-            model._Booster = model_data["model"]  # ✅ Attach trained booster
-        elif not isinstance(model, lgb.LGBMRegressor):
-            raise ValueError(f"❌ LightGBM model is not a valid `LGBMRegressor`! Got: {type(model)}")
-
-        return model
+            model_data = joblib.load(model_path)
+            
+            if isinstance(model_data, lgb.Booster):
+                # Directly return Booster if saved as raw booster
+                return model_data
+            elif isinstance(model_data, dict) and "model" in model_data:
+                # Handle our custom saved format
+                if isinstance(model_data["model"], lgb.LGBMRegressor):
+                    return model_data["model"]
+                elif isinstance(model_data["model"], lgb.Booster):
+                    # Create wrapper regressor with loaded booster
+                    regressor = lgb.LGBMRegressor()
+                    regressor._Booster = model_data["model"]
+                    return regressor
+            elif isinstance(model_data, lgb.LGBMRegressor):
+                return model_data
+            
+            raise ValueError(f"❌ Unsupported LightGBM model format: {type(model_data)}")
 
 
 
@@ -353,11 +358,19 @@ def main():
 
                     # ✅ LightGBM Processing
                     elif selected_category == "LightGBM":
+                        # Convert to pandas DataFrame with proper column names
+                        input_df = pd.DataFrame(normalized_input, columns=input_columns)
+                        
                         if isinstance(model, lgb.LGBMRegressor):
-                            normalized_input = pd.DataFrame(normalized_input, columns=input_columns)  # ✅ Ensure DataFrame input
-                            prediction = model.predict(normalized_input)  # ✅ Works for LGBMRegressor
+                            # Use standard sklearn-style prediction
+                            prediction = model.predict(input_df)
+                        elif isinstance(model, lgb.Booster):
+                            # Use Booster-style prediction with proper feature names
+                            prediction = model.predict(input_df.values,
+                                                     num_iteration=model.best_iteration,
+                                                     feature_name=input_columns)
                         else:
-                            raise ValueError(f"❌ LightGBM model is not a valid `LGBMRegressor`! Got: {type(model)}")
+                            raise ValueError(f"❌ Unsupported LightGBM model type: {type(model)}")
 
 
                     # ✅ ANN Processing
