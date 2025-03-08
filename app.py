@@ -193,21 +193,18 @@ def load_best_model(category, sheet):
         if category == "LightGBM":
             model_data = joblib.load(model_path)
             
-            # Handle different save formats
+            # Handle different LightGBM formats
             if isinstance(model_data, lgb.Booster):
-                return model_data  # Return raw Booster model
-            elif isinstance(model_data, dict):
-                if "model" in model_data:
-                    if isinstance(model_data["model"], lgb.Booster):
-                        return model_data["model"]
-                    elif isinstance(model_data["model"], lgb.LGBMRegressor):
-                        return model_data["model"]
-                    else:
-                        raise ValueError(f"❌ Unexpected model type inside dictionary: {type(model_data['model'])}")
+                return model_data  # Native Booster format
+            elif isinstance(model_data, dict) and "model" in model_data:
+                if isinstance(model_data["model"], lgb.Booster):
+                    return model_data["model"]  # Extract and return the booster
+                elif isinstance(model_data["model"], lgb.LGBMRegressor):
+                    return model_data["model"]  # Return the sklearn model
                 else:
-                    raise ValueError(f"❌ Dictionary format detected but missing 'model' key: {model_data.keys()}")
+                    raise ValueError(f"❌ Unexpected model type inside dictionary: {type(model_data['model'])}")
             elif isinstance(model_data, lgb.LGBMRegressor):
-                return model_data
+                return model_data  # Directly return the regressor
             else:
                 raise ValueError(f"❌ Unsupported LightGBM model format: {type(model_data)}")
         
@@ -222,6 +219,7 @@ def load_best_model(category, sheet):
     except Exception as e:
         st.error(f"❌ Error loading {category} model: {str(e)}")
         st.stop()
+
 
 
 # ======================
@@ -369,6 +367,7 @@ def main():
 
                     # ✅ LightGBM Processing
                     # ✅ LightGBM Processing
+                    # ✅ LightGBM Processing
                     elif selected_category == "LightGBM":
                         if isinstance(model, lgb.Booster):
                             input_array = np.array([user_inputs], dtype=np.float32)
@@ -378,6 +377,7 @@ def main():
                             prediction = model.predict(input_df)
                         else:
                             raise ValueError(f"❌ Unsupported LightGBM model type: {type(model)}")
+
 
                     # ✅ ANN Processing
                     elif selected_category in ["ANN-Practical Solution", "ANN-MPL"]:

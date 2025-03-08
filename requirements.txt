@@ -2,6 +2,6 @@ streamlit
 numpy
 pandas
 xgboost
-lightgbm
+lightgbm==4.2.0
 tensorflow
 joblib
