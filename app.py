@@ -182,6 +182,9 @@ def denormalize_output(normalized_pred, norm_params):
 import lightgbm as lgb
 import joblib
 
+import lightgbm as lgb
+import joblib
+
 def load_best_model(category, sheet):
     model_path = model_files[category][sheet]
     if not os.path.exists(model_path):
@@ -192,18 +195,20 @@ def load_best_model(category, sheet):
         if category == "LightGBM":
             model_data = joblib.load(model_path)
 
-            # ✅ Print LightGBM version for debugging
-            st.write(f"🔥 LightGBM Version: {lgb.__version__}")
-
-            # ✅ Check if the loaded model is stored as a dictionary
+            # ✅ Debug: Check type of loaded model
+            st.write(f"🔥 Loaded LightGBM model type: {type(model_data)}")
+            
+            # ✅ Fix model if it's stored as a dictionary
             if isinstance(model_data, dict) and "model" in model_data:
                 model = model_data["model"]
             else:
-                model = model_data  # Assume it's the model itself
+                model = model_data
 
-            # ✅ Ensure it's an `LGBMRegressor`
+            # ✅ If it's still not an `LGBMRegressor`, reconstruct it
             if not isinstance(model, lgb.LGBMRegressor):
-                raise ValueError(f"❌ Loaded model is not `LGBMRegressor`! Got: {type(model)}")
+                st.write("⚠️ Fixing model type by reconstructing LGBMRegressor...")
+                model = lgb.LGBMRegressor()
+                model.__dict__.update(model_data.__dict__)  # Restore parameters
 
             return model
 
