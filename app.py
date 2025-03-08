@@ -1,11 +1,9 @@
-import streamlit as st
 import os
-import streamlit as st
-
-# Ensure the correct LightGBM version is installed online
+# Run this before importing streamlit so that no streamlit commands run before page config
 os.system("pip install --upgrade lightgbm==4.2.0")
 
-import lightgbm as lgb
+import streamlit as st
+
 
 
 # Debugging: Check LightGBM version after installation
