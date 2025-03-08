@@ -1,7 +1,3 @@
-import os
-# Run this before importing streamlit so that no streamlit commands run before page config
-os.system("pip install --upgrade lightgbm==4.2.0")
-
 import streamlit as st
 
 
@@ -183,6 +179,9 @@ def denormalize_output(normalized_pred, norm_params):
     return y_min + ((normalized_pred + 1) / 2) * (y_max - y_min)
 
 
+import lightgbm as lgb
+import joblib
+
 def load_best_model(category, sheet):
     model_path = model_files[category][sheet]
     if not os.path.exists(model_path):
@@ -192,25 +191,25 @@ def load_best_model(category, sheet):
     try:
         if category == "LightGBM":
             model_data = joblib.load(model_path)
-            
-            # Handle different LightGBM formats
-            if isinstance(model_data, lgb.Booster):
-                return model_data  # Native Booster format
-            elif isinstance(model_data, dict) and "model" in model_data:
-                if isinstance(model_data["model"], lgb.Booster):
-                    return model_data["model"]  # Extract and return the booster
-                elif isinstance(model_data["model"], lgb.LGBMRegressor):
-                    return model_data["model"]  # Return the sklearn model
-                else:
-                    raise ValueError(f"❌ Unexpected model type inside dictionary: {type(model_data['model'])}")
-            elif isinstance(model_data, lgb.LGBMRegressor):
-                return model_data  # Directly return the regressor
+
+            # ✅ Print LightGBM version for debugging
+            st.write(f"🔥 LightGBM Version: {lgb.__version__}")
+
+            # ✅ Check if the loaded model is stored as a dictionary
+            if isinstance(model_data, dict) and "model" in model_data:
+                model = model_data["model"]
             else:
-                raise ValueError(f"❌ Unsupported LightGBM model format: {type(model_data)}")
-        
+                model = model_data  # Assume it's the model itself
+
+            # ✅ Ensure it's an `LGBMRegressor`
+            if not isinstance(model, lgb.LGBMRegressor):
+                raise ValueError(f"❌ Loaded model is not `LGBMRegressor`! Got: {type(model)}")
+
+            return model
+
         elif category in ["ANN-Practical Solution", "ANN-MPL"]:
             return load_model(model_path, custom_objects=custom_objects)
-        
+
         elif category == "XGBoost":
             model = xgb.Booster()
             model.load_model(model_path)
@@ -219,6 +218,7 @@ def load_best_model(category, sheet):
     except Exception as e:
         st.error(f"❌ Error loading {category} model: {str(e)}")
         st.stop()
+
 
 
 
