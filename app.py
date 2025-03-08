@@ -191,15 +191,20 @@ def load_best_model(category, sheet):
             return model
     elif category == "LightGBM":
         model_data = joblib.load(model_path)  # ✅ Load dictionary
-        if isinstance(model_data, dict) and "model" in model_data:  # ✅ Extract model
+        if isinstance(model_data, dict) and "model" in model_data:
             model = model_data["model"]
         else:
             raise ValueError(f"❌ Unexpected LightGBM model format! Got: {type(model_data)}")
         
-        if isinstance(model, lgb.LGBMRegressor):  # ✅ Ensure it's LGBMRegressor
-            return model
-        else:
+        # ✅ Convert model to LGBMRegressor explicitly
+        if isinstance(model, lgb.Booster):
+            model = lgb.LGBMRegressor()  # ✅ Create LGBMRegressor
+            model._Booster = model_data["model"]  # ✅ Attach trained booster
+        elif not isinstance(model, lgb.LGBMRegressor):
             raise ValueError(f"❌ LightGBM model is not a valid `LGBMRegressor`! Got: {type(model)}")
+
+        return model
+
 
 
 
