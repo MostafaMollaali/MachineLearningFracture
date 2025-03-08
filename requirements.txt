@@ -4,3 +4,4 @@ pandas
 xgboost
 lightgbm
 tensorflow
+joblib
