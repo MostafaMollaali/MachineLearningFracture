@@ -183,34 +183,39 @@ def load_best_model(category, sheet):
         st.error(f"❌ Model file not found at: `{model_path}`")
         st.stop()
 
-    if category in ["ANN-Practical Solution", "ANN-MPL"]:
-        return load_model(model_path, custom_objects=custom_objects)
-    elif category == "XGBoost":
+    try:
+        if category == "LightGBM":
+            model_data = joblib.load(model_path)
+            
+            # Handle different save formats
+            if isinstance(model_data, lgb.Booster):
+                return model_data  # Return raw Booster model
+            elif isinstance(model_data, dict):
+                if "model" in model_data:
+                    if isinstance(model_data["model"], lgb.Booster):
+                        return model_data["model"]
+                    elif isinstance(model_data["model"], lgb.LGBMRegressor):
+                        return model_data["model"]
+                    else:
+                        raise ValueError(f"❌ Unexpected model type inside dictionary: {type(model_data['model'])}")
+                else:
+                    raise ValueError(f"❌ Dictionary format detected but missing 'model' key: {model_data.keys()}")
+            elif isinstance(model_data, lgb.LGBMRegressor):
+                return model_data
+            else:
+                raise ValueError(f"❌ Unsupported LightGBM model format: {type(model_data)}")
+        
+        elif category in ["ANN-Practical Solution", "ANN-MPL"]:
+            return load_model(model_path, custom_objects=custom_objects)
+        
+        elif category == "XGBoost":
             model = xgb.Booster()
             model.load_model(model_path)
             return model
-    # ✅ LightGBM Processing
-    elif category == "LightGBM":
-            model_data = joblib.load(model_path)
-            
-            if isinstance(model_data, lgb.Booster):
-                # Directly return Booster if saved as raw booster
-                return model_data
-            elif isinstance(model_data, dict) and "model" in model_data:
-                # Handle our custom saved format
-                if isinstance(model_data["model"], lgb.LGBMRegressor):
-                    return model_data["model"]
-                elif isinstance(model_data["model"], lgb.Booster):
-                    # Create wrapper regressor with loaded booster
-                    regressor = lgb.LGBMRegressor()
-                    regressor._Booster = model_data["model"]
-                    return regressor
-            elif isinstance(model_data, lgb.LGBMRegressor):
-                return model_data
-            
-            raise ValueError(f"❌ Unsupported LightGBM model format: {type(model_data)}")
 
-
+    except Exception as e:
+        st.error(f"❌ Error loading {category} model: {str(e)}")
+        st.stop()
 
 
 # ======================
@@ -357,21 +362,16 @@ def main():
                         prediction = model.predict(dmatrix)
 
                     # ✅ LightGBM Processing
+                    # ✅ LightGBM Processing
                     elif selected_category == "LightGBM":
-                        # Convert to pandas DataFrame with proper column names
-                        input_df = pd.DataFrame(normalized_input, columns=input_columns)
-                        
-                        if isinstance(model, lgb.LGBMRegressor):
-                            # Use standard sklearn-style prediction
+                        if isinstance(model, lgb.Booster):
+                            input_array = np.array([user_inputs], dtype=np.float32)
+                            prediction = model.predict(input_array, num_iteration=model.best_iteration)
+                        elif isinstance(model, lgb.LGBMRegressor):
+                            input_df = pd.DataFrame(normalized_input, columns=input_columns)
                             prediction = model.predict(input_df)
-                        elif isinstance(model, lgb.Booster):
-                            # Use Booster-style prediction with proper feature names
-                            prediction = model.predict(input_df.values,
-                                                     num_iteration=model.best_iteration,
-                                                     feature_name=input_columns)
                         else:
                             raise ValueError(f"❌ Unsupported LightGBM model type: {type(model)}")
-
 
                     # ✅ ANN Processing
                     elif selected_category in ["ANN-Practical Solution", "ANN-MPL"]:
