@@ -87,6 +87,7 @@ st.markdown("""
 # ======================
 # REST OF IMPORTS
 # ======================
+import streamlit as st
 import numpy as np
 import os
 import json
@@ -95,11 +96,13 @@ import xgboost as xgb
 import lightgbm as lgb
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
+import joblib
+
 
 # ======================
 # CONSTANTS & CONFIG
 # ======================
-categories = ["ANN-Practical Solution", "ANN-MPL"]#, "XGBoost", "LightGBM"]
+categories = ["ANN-Practical Solution", "ANN-MPL", "XGBoost", "LightGBM"]
 sheet_names = ["Glass-Tension", "Glass-Flexure", "Ceramic-Flexure", "Ceramic-Tension"]
 
 ceramic_input_columns = ['sqrt(t/R)', 'E*sqrt(t)/Kic', 'ell/R', 'v']
@@ -123,20 +126,22 @@ model_files = {
         "Glass-Flexure": "_out/best_model_ANN_MPL_Glass-Flexure_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
         "Ceramic-Flexure": "_out/best_model_ANN_MPL_Ceramic-Flexure_OPT-RMSprop_LR-0.012344_LOSS-mse_HU-7_ACT-softsign.keras",
         "Ceramic-Tension": "_out/best_model_ANN_MPL_Ceramic-Tension_OPT-Adam_LR-0.032276_LOSS-log_cosh_HU-11_ACT-softsign.keras"
-    }#,
-#    "XGBoost": {
-#        "Glass-Tension": "_out/best_xgboost_model_Glass-Tension.json",
-#        "Glass-Flexure": "_out/best_xgboost_model_Glass-Flexure.json",
-#        "Ceramic-Flexure": "_out/best_xgboost_model_Ceramic-Flexure.json",
-#        "Ceramic-Tension": "_out/best_xgboost_model_Ceramic-Tension.json"
-#    },
-#    "LightGBM": {
-#        "Glass-Tension": "_out/best_lightgbm_model_Glass-Tension.json",
-#        "Glass-Flexure": "_out/best_lightgbm_model_Glass-Flexure.json",
-#        "Ceramic-Flexure": "_out/best_lightgbm_model_Ceramic-Flexure.json",
-#        "Ceramic-Tension": "_out/best_lightgbm_model_Ceramic-Tension.json"
-#    }
+    },
+      "XGBoost": {
+        "Glass-Tension": "_out/Glass-Tension_bayesian_xgboost_best_model.json",
+        "Glass-Flexure": "_out/Glass-Flexure_bayesian_xgboost_best_model.json",
+        "Ceramic-Flexure": "_out/Ceramic-Flexure_bayesian_xgboost_best_model.json",
+        "Ceramic-Tension": "_out/Ceramic-Tension_bayesian_xgboost_best_model.json"
+    },
+    "LightGBM": {
+        "Glass-Tension": "_out/Glass-Tension_bayesian_lgbm_best_model.pkl",
+        "Glass-Flexure": "_out/Glass-Flexure_bayesian_lgbm_best_model.pkl",
+        "Ceramic-Flexure": "_out/Ceramic-Flexure_bayesian_lgbm_best_model.pkl",
+        "Ceramic-Tension": "_out/Ceramic-Tension_bayesian_lgbm_best_model.pkl"
+    }
 }
+
+
 
 normalization_files = {
     "Glass-Tension": "_out/normalization_params_Glass-Tension.json",
@@ -180,12 +185,12 @@ def load_best_model(category, sheet):
 
     if category in ["ANN-Practical Solution", "ANN-MPL"]:
         return load_model(model_path, custom_objects=custom_objects)
-#    elif category == "XGBoost":
-#        model = xgb.Booster()
-#        model.load_model(model_path)
-#        return model
-#    elif category == "LightGBM":
-#        return lgb.Booster(model_file=model_path)
+    elif category == "XGBoost":
+            model = xgb.Booster()
+            model.load_model(model_path)
+            return model
+    elif category == "LightGBM":
+            return joblib.load(model_path)["model"]
 
 # ======================
 # EXPLANATION SECTION
@@ -321,15 +326,15 @@ def main():
                     # Normalize and predict
                     normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
                     
-#                    if selected_category == "XGBoost":
-#                        input_df = pd.DataFrame(normalized_input, columns=model.feature_names)
-#                        dmatrix = xgb.DMatrix(input_df)
-#                        prediction = model.predict(dmatrix)
-#                    elif selected_category == "LightGBM":
+                    if selected_category == "XGBoost":
+                        input_df = pd.DataFrame(normalized_input, columns=input_columns)
+                        dmatrix = xgb.DMatrix(input_df, feature_names=model.feature_names)
+                        prediction = model.predict(dmatrix)
+                    elif selected_category == "LightGBM":
+                        prediction = model.predict(normalized_input)
+                    else:  # ANN models
 #                        prediction = model.predict(normalized_input)
-#                    else:  # ANN models
-#                        prediction = model.predict(normalized_input)
-                    prediction = model.predict(normalized_input)
+                        prediction = model.predict(normalized_input)
 
                     # Denormalize and store result
                     real_prediction = denormalize_output(prediction[0], norm_params)
