@@ -5,10 +5,6 @@ os.system("pip install --upgrade lightgbm==4.2.0")
 import streamlit as st
 
 
-
-# Debugging: Check LightGBM version after installation
-st.write(f"🔥 LightGBM Version: {lgb.__version__}")
-
 # ======================
 # PAGE CONFIG (MUST BE FIRST STREAMLIT COMMAND)
 # ======================
@@ -106,7 +102,8 @@ import lightgbm as lgb
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
 import joblib
-
+# Debugging: Check LightGBM version after installation
+st.write(f"🔥 LightGBM Version: {lgb.__version__}")
 
 # ======================
 # CONSTANTS & CONFIG
