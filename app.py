@@ -124,12 +124,12 @@ model_files = {
         "Ceramic-Tension": "_out/best_model_ANN_PracticalSol_Ceramic-Tension.h5"
     },
     "ANN-MPL": {
-        "Glass-Tension": "_out/best_model_ANN_MPL_Glass-Tension_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
-        "Glass-Flexure": "_out/best_model_ANN_MPL_Glass-Flexure_OPT-RMSprop_LR-0.006251_LOSS-mse_HU-14_ACT-softsign.keras",
-        "Ceramic-Flexure": "_out/best_model_ANN_MPL_Ceramic-Flexure_OPT-RMSprop_LR-0.012344_LOSS-mse_HU-7_ACT-softsign.keras",
-        "Ceramic-Tension": "_out/best_model_ANN_MPL_Ceramic-Tension_OPT-Adam_LR-0.032276_LOSS-log_cosh_HU-11_ACT-softsign.keras"
+      "Glass-Tension": "_out/best_model_ANN_MPL_Glass-Tension_OPT-Adam_LR-0.022277_LOSS-mse_HU-7_ACT-softsign.keras",
+      "Glass-Flexure": "_out/best_model_ANN_MPL_Glass-Flexure_OPT-Adam_LR-0.010222_LOSS-mse_HU-15_ACT-softsign.keras",
+      "Ceramic-Flexure": "_out/best_model_ANN_MPL_Ceramic-Flexure_OPT-Adam_LR-0.019625_LOSS-mse_HU-16_ACT-softsign.keras",
+      "Ceramic-Tension": "_out/best_model_ANN_MPL_Ceramic-Tension_OPT-Adam_LR-0.038810_LOSS-mse_HU-26_ACT-softsign.keras"
     },
-      "XGBoost": {
+    "XGBoost": {
         "Glass-Tension": "_out/Glass-Tension_bayesian_xgboost_best_model.json",
         "Glass-Flexure": "_out/Glass-Flexure_bayesian_xgboost_best_model.json",
         "Ceramic-Flexure": "_out/Ceramic-Flexure_bayesian_xgboost_best_model.json",
