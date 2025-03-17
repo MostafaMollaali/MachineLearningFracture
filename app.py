@@ -99,12 +99,12 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError, MeanAbsoluteError, Huber, LogCosh
 import joblib
 # Debugging: Check LightGBM version after installation
-st.write(f"🔥 LightGBM Version: {lgb.__version__}")
+#st.write(f"🔥 LightGBM Version: {lgb.__version__}")
 
 # ======================
 # CONSTANTS & CONFIG
 # ======================
-categories = ["ANN-Practical Solution", "ANN-MPL", "XGBoost", "LightGBM"]
+categories = ["Practical Solution", "MLP Solution", "XGBoost Solution", "LightGBM Solution"]
 sheet_names = ["Glass-Tension", "Glass-Flexure", "Ceramic-Flexure", "Ceramic-Tension"]
 
 ceramic_input_columns = ['sqrt(t/R)', 'E*sqrt(t)/Kic', 'ell/R', 'v']
@@ -117,25 +117,25 @@ target_column = 'Sig*sqrt(t)/Kic'
 target_latex = r'$\dfrac{\sigma\sqrt{t}}{K_{\mathrm{Ic}}}$'
 
 model_files = {
-    "ANN-Practical Solution": {
+    "Practical Solution": {
         "Glass-Tension": "_out/best_model_ANN_PracticalSol_Glass-Tension.h5",
         "Glass-Flexure": "_out/best_model_ANN_PracticalSol_Glass-Flexure.h5",
         "Ceramic-Flexure": "_out/best_model_ANN_PracticalSol_Ceramic-Flexure.h5",
         "Ceramic-Tension": "_out/best_model_ANN_PracticalSol_Ceramic-Tension.h5"
     },
-    "ANN-MPL": {
+    "MLP Solution": {
       "Glass-Tension": "_out/best_model_ANN_MPL_Glass-Tension_OPT-Adam_LR-0.022277_LOSS-mse_HU-7_ACT-softsign.keras",
       "Glass-Flexure": "_out/best_model_ANN_MPL_Glass-Flexure_OPT-Adam_LR-0.010222_LOSS-mse_HU-15_ACT-softsign.keras",
       "Ceramic-Flexure": "_out/best_model_ANN_MPL_Ceramic-Flexure_OPT-Adam_LR-0.019625_LOSS-mse_HU-16_ACT-softsign.keras",
       "Ceramic-Tension": "_out/best_model_ANN_MPL_Ceramic-Tension_OPT-Adam_LR-0.038810_LOSS-mse_HU-26_ACT-softsign.keras"
     },
-    "XGBoost": {
+    "XGBoost Solution": {
         "Glass-Tension": "_out/Glass-Tension_bayesian_xgboost_best_model.json",
         "Glass-Flexure": "_out/Glass-Flexure_bayesian_xgboost_best_model.json",
         "Ceramic-Flexure": "_out/Ceramic-Flexure_bayesian_xgboost_best_model.json",
         "Ceramic-Tension": "_out/Ceramic-Tension_bayesian_xgboost_best_model.json"
     },
-    "LightGBM": {
+    "LightGBM Solution": {
         "Glass-Tension": "_out/Glass-Tension_bayesian_lgbm_best_model.pkl",
         "Glass-Flexure": "_out/Glass-Flexure_bayesian_lgbm_best_model.pkl",
         "Ceramic-Flexure": "_out/Ceramic-Flexure_bayesian_lgbm_best_model.pkl",
@@ -193,7 +193,7 @@ def load_best_model(category, sheet):
         st.stop()
 
     try:
-        if category == "LightGBM":
+        if category == "LightGBM Solution":
             model_data = joblib.load(model_path)
             
             # Handle different storage formats
@@ -209,7 +209,7 @@ def load_best_model(category, sheet):
                 return booster
             return model_data
 
-        elif category in ["ANN-Practical Solution", "ANN-MPL"]:
+        elif category in ["Practical Solution", "MLP Solution"]:
             return load_model(model_path, custom_objects=custom_objects)
 
         elif category == "XGBoost":
@@ -295,33 +295,85 @@ def show_parameter_explanations(selected_sheet, norm_params):
 # MAIN APP
 # ======================
 def main():
-    st.title("🧪 Material Strength AI Predictor")
-    st.markdown("*Leveraging advanced machine learning models to predict material failure thresholds*")
+    # Custom CSS for fonts and spacing
+    st.markdown("""
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+            * {
+                font-family: 'Inter', sans-serif;
+            }
+            .stApp {
+                margin-top: -2rem;
+            }
+            .main-column {
+                padding-right: 1rem !important;
+            }
+            .st-emotion-cache-1kyxreq {
+                padding: 1rem;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .history-item {
+                border-left: 3px solid #2980b9;
+                padding: 0.6rem;
+                margin: 0.4rem 0;
+                font-size: 0.85rem;
+            }
+            .title-container {
+                margin-bottom: 1rem;
+            }
+            .title-hr {
+                border: 1px solid #e0e0e0;
+                margin: 4rem 0;
+            }
+            /* Align sidebar header with main title */
+            .sidebar .st-emotion-cache-1v7f65g {
+                padding-top: 1.4rem;
+            }
+
+            /* Reduce side margins */
+            .block-container {
+                padding-left: -0.5rem;
+                padding-right: -0.5rem;
+            }
+            /* Make visualization column wider */
+            .st-emotion-cache-1n76uvr {
+                width: calc(120% - 0.1rem);
+                margin-left: 0rem;
+            }
+            
+        </style>
+        
+        <div class="title-container">
+            <h2 style='font-size: 1.5rem; font-weight: 600; color: #2c3e50; margin: 0.2rem 0;'>
+                Machine Learning-Based Prediction of Brittle Fracture Strength
+            </h2>
+            <hr class="title-hr">
+        </div>
+    """, unsafe_allow_html=True)
+
 
     # Initialize prediction history
     if 'history' not in st.session_state:
         st.session_state.history = []
 
-    # Model selection
-    col1, col2 = st.columns([3, 2])
-    with col1:
-        selected_category = st.selectbox("**Select AI Model Type**", categories)
-        selected_sheet = st.selectbox("**Material & Test Type**", sheet_names)
-
-    # Load model and normalization parameters
-    model = load_best_model(selected_category, selected_sheet)
-    norm_params = load_normalization_params(selected_sheet)
-
-    # Show parameter explanations
-    show_parameter_explanations(selected_sheet, norm_params)
-
-    # Input configuration
-    input_columns = glass_input_columns if "Glass" in selected_sheet else ceramic_input_columns
-    input_labels = glass_input_latex if "Glass" in selected_sheet else ceramic_input_latex
+    # Main layout columns
+    col_main, col_vis = st.columns([35, 65], gap="large")
+    
+    with col_main:
+        selected_category = st.selectbox("**Model Selection**", categories, key="model_type")
+        selected_sheet = st.selectbox("**Material-Test Type Selection**", sheet_names, key="material_type")
+        
+        # Load model and parameters
+        model = load_best_model(selected_category, selected_sheet)
+        norm_params = load_normalization_params(selected_sheet)
+        input_columns = glass_input_columns if "Glass" in selected_sheet else ceramic_input_columns
+        input_labels = glass_input_latex if "Glass" in selected_sheet else ceramic_input_latex
 
     # Sidebar inputs
     with st.sidebar:
-        st.header("🧮 Input Parameters")
+        st.header("Input Features", divider="gray")
         user_inputs = []
         out_of_range = False
 
@@ -330,112 +382,146 @@ def main():
             min_val = norm_params["X_min"][col]
             max_val = norm_params["X_max"][col]
 
-            with st.expander(f"Parameter {i+1}: {label}", expanded=True):
+            with st.container():
                 value = st.number_input(
-                    f"Value for {label}",
-                    value=float((min_val + max_val)/2),
+                    f"${label}$",
+                    value=float((min_val + max_val) / 2),
+                    min_value=float(min_val * 0.9),
+                    max_value=float(max_val * 1.1),
                     step=0.001,
                     format="%.4f",
-                    key=f"input_{i}"
+                    help=f"Recommended range: {min_val:.4f} to {max_val:.4f}"
                 )
                 
-                # Range validation
                 if value < min_val or value > max_val:
-                    st.error(f"⚠️ Out of recommended range ({min_val:.4f} to {max_val:.4f})")
                     out_of_range = True
-                else:
-                    st.caption(f"Recommended range: {min_val:.4f} to {max_val:.4f}")
-                
-                user_inputs.append(value)
 
-    # Prediction logic
-    if st.button("🚀 Run Prediction", use_container_width=True):
-        if out_of_range:
-            st.error("⚠️ One or more parameters are outside recommended ranges!")
-        else:
-            with st.spinner("🧠 Analyzing material properties..."):
+            user_inputs.append(value)
+
+
+    with col_main:
+        if st.button("Calculate", type="primary", use_container_width=True):
+            if out_of_range:
+                st.warning("Inputs outside recommended ranges may affect accuracy", icon="⚠️")
+            
+            with st.spinner("Computing..."):
                 try:
-                    # ✅ Normalize Input
-                    normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
+                        # ✅ Normalize Input
+                        normalized_input = normalize_input(user_inputs, norm_params, input_columns).reshape(1, -1)
 
-                    # ✅ Initialize `prediction` to avoid UnboundLocalError
-                    prediction = None
+                        # ✅ Initialize `prediction` to avoid UnboundLocalError
+                        prediction = None
 
-                    # ✅ XGBoost Processing
-                    if selected_category == "XGBoost":
-                        input_df = pd.DataFrame(normalized_input, columns=input_columns)
-                        dmatrix = xgb.DMatrix(input_df, feature_names=input_columns)  # ✅ Ensure correct feature names
-                        prediction = model.predict(dmatrix)
+                        # ✅ XGBoost Solution Processing
+                        if selected_category == "XGBoost Solution":
+                            input_df = pd.DataFrame(normalized_input, columns=input_columns)
+                            dmatrix = xgb.DMatrix(input_df, feature_names=input_columns)
+                            prediction = model.predict(dmatrix)
 
-                    # ✅ LightGBM Processing
-                    elif selected_category == "LightGBM":
-                        # Universal input format
-                        input_array = np.array(normalized_input, dtype=np.float32).reshape(1, -1)
+                        # ✅ LightGBM Solution Processing
+                        elif selected_category == "LightGBM Solution":
+                            # Universal input format
+                            input_array = np.array(normalized_input, dtype=np.float32).reshape(1, -1)
+                            
+                            if isinstance(model, lgb.Booster):
+                                # Use native booster prediction
+                                prediction = model.predict(
+                                    input_array,
+                                    num_iteration=model.best_iteration,
+                                    validate_features=Fals
+                                )
+                            else:
+                                # Use sklearn-style prediction
+                                prediction = model.predict(input_array)
+
+
+                        # ✅ ANN Processing
+                        elif selected_category in ["Practical Solution", "MLP Solution"]:
+                            prediction = model.predict(normalized_input)
+
+                        # 🚨 Ensure prediction was assigned before proceeding
+                        if prediction is None:
+                            raise ValueError(f"❌ Unsupported model type: {selected_category}")
+
+                        # ✅ Denormalize & Convert Result
+                        real_prediction = denormalize_output(prediction[0], norm_params)
+                        if isinstance(real_prediction, np.ndarray):
+                            real_prediction = real_prediction.item()
+
+                        # ✅ Store in History
+                        st.session_state.history.insert(0, {
+                            "prediction": real_prediction,
+                            "model": selected_category,
+                            "material": selected_sheet,
+                            "inputs": user_inputs
+                        })
                         
-                        if isinstance(model, lgb.Booster):
-                            # Use native booster prediction
-                            prediction = model.predict(
-                                input_array,
-                                num_iteration=model.best_iteration,
-                                validate_features=False
-                            )
-                        else:
-                            # Use sklearn-style prediction
-                            prediction = model.predict(input_array)
-
-
-                    # ✅ ANN Processing
-                    elif selected_category in ["ANN-Practical Solution", "ANN-MPL"]:
-                        prediction = model.predict(normalized_input)  # ✅ Keras expects NumPy array
-
-                    # 🚨 Ensure prediction was assigned before proceeding
-                    if prediction is None:
-                        raise ValueError(f"❌ Unsupported model type: {selected_category}")
-
-                    # ✅ Denormalize & Convert Result
-                    real_prediction = denormalize_output(prediction[0], norm_params)
-                    if isinstance(real_prediction, np.ndarray):
-                        real_prediction = real_prediction.item()
-
-                    # ✅ Store in History
-                    st.session_state.history.insert(0, {
-                        "prediction": real_prediction,
-                        "model": selected_category,
-                        "material": selected_sheet,
-                        "inputs": user_inputs
-                    })
-
-                    # ✅ Display Results
-                    st.success("✅ Prediction Generated!")
-                    col_res1, col_res2 = st.columns([2, 3])
-
-                    with col_res1:
-                        st.markdown(f"""
-                        <div class="prediction-card success-animation">
-                            <h3 style='color: #2ecc71; margin-bottom: 1rem;'>Predicted Strength</h3>
-                            <div style='font-size: 2.5rem; font-weight: bold; color: #27ae60;'>
-                                {real_prediction:.5f}
-                            </div>
-                            <div style='margin-top: 1rem;'>
-                                {target_latex}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                    with col_res2:
-                        st.markdown("### Prediction History")
-                        for idx, entry in enumerate(st.session_state.history[:5]):
-                            st.markdown(f"""
-                            <div class="prediction-card">
-                                <b>#{idx+1}</b> {entry['material']} ({entry['model']})<br>
-                                <span style="color: #3498db;">{entry['prediction']:.5f}</span>
-                            </div>
-                            """, unsafe_allow_html=True)
+                        # Display results
+                        with st.container():
+                                st.divider()
+                                # Create columns for label + value
+                                col_label, col_value = st.columns([2, 3])
+                                
+                                with col_label:
+                                    # LaTeX label with matching font size
+                                    st.metric(label=f"${target_latex}$",
+                                        value="")
+                                
+                                with col_value:
+                                    # Prediction value display
+                                    st.markdown(
+                                        f"<div style='font-size: 1.2rem; font-weight: 500; color: #2c3e50; padding: 0.1rem 0;'>"
+                                        f"{real_prediction:.5f}"
+                                        f"</div>",
+                                        unsafe_allow_html=True
+                                    )
+                                
+                                # Prediction history
+                                st.subheader("Recent Predictions", divider="gray")
+                                for idx, entry in enumerate(st.session_state.history[:5]):
+                                    st.markdown(f"""
+                                        <div class="history-item" style="padding:0.5rem; margin:0.25rem 0; font-size:0.9rem">
+                                            <div style="color:#6c757d">{entry['material']}</div>
+                                            <div style="font-weight:600; color:#2c3e50">{entry['prediction']:.5f}</div>
+                                        </div>
+                                    """, unsafe_allow_html=True)
 
                 except Exception as e:
-                    st.error(f"❌ Prediction failed: {str(e)}")
-                    st.exception(e)
+                    st.error(f"Calculation error: {str(e)}")
+   
 
+    with col_vis:
+        # First row of images
+        row1 = st.columns(2, gap="small")
+        with row1[0]:
+            st.image("assets/fs_ceramic.jpg",
+                    caption="Fracture",
+                    use_container_width=True)
+        with row1[1]:
+            st.image("assets/fs_ceramic.jpg",
+                    caption="Fracture",
+                    use_container_width=True)
+        
+        # Second row of images
+        row2 = st.columns(2, gap="small")
+        with row2[0]:
+            st.image("assets/fs_ceramic.jpg",
+                    caption="Fracture",
+                    use_container_width=True)
+        with row2[1]:
+            st.image("assets/fs_ceramic.jpg",
+                    caption="Fracture",
+                    use_container_width=True)
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
