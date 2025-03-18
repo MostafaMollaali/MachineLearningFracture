@@ -212,7 +212,7 @@ def load_best_model(category, sheet):
         elif category in ["Practical Solution", "MLP Solution"]:
             return load_model(model_path, custom_objects=custom_objects)
 
-        elif category == "XGBoost":
+        elif category == "XGBoost Solution":
             model = xgb.Booster()
             model.load_model(model_path)
             return model
