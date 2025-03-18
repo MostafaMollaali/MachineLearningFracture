@@ -495,22 +495,22 @@ def main():
         row1 = st.columns(2, gap="small")
         with row1[0]:
             st.image("assets/fs_ceramic.jpg",
-                    caption="Fracture",
+                    caption="Ceramic",
                     use_container_width=True)
         with row1[1]:
-            st.image("assets/fs_ceramic.jpg",
-                    caption="Fracture",
+            st.image("assets/fs_glass.jpg",
+                    caption="Glass",
                     use_container_width=True)
         
         # Second row of images
         row2 = st.columns(2, gap="small")
         with row2[0]:
-            st.image("assets/fs_ceramic.jpg",
-                    caption="Fracture",
+            st.image("assets/3PBT.png",
+                    caption="Flexure",
                     use_container_width=True)
         with row2[1]:
-            st.image("assets/fs_ceramic.jpg",
-                    caption="Fracture",
+            st.image("assets/Tension.png",
+                    caption="Tension",
                     use_container_width=True)
 
 if __name__ == "__main__":
